@@ -1,11 +1,12 @@
 var dataset = require('./dataset.json');
+let bb = dataset.bankBalances;
 
 /*
   create an array with accounts from bankBalances that are
   greater than 100000
   assign the resulting new array to `hundredThousandairs`
 */
-var hundredThousandairs = null;
+var hundredThousandairs = bb.filter(e => e.amount > 100000);
 
 /*
   DO NOT MUTATE DATA.
@@ -24,7 +25,13 @@ var hundredThousandairs = null;
     }
   assign the resulting new array to `datasetWithRoundedDollar`
 */
-var datasetWithRoundedDollar = null;
+var datasetWithRoundedDollar = bb.reduce((a,c) => {
+  let round = Math.round(c.amount, 0)
+  let obj = {...c};
+  obj.rounded = round;
+  a.push(obj);
+  return a;
+}, [])
 
 /*
   DO NOT MUTATE DATA.
@@ -49,10 +56,18 @@ var datasetWithRoundedDollar = null;
     }
   assign the resulting new array to `roundedDime`
 */
-var datasetWithRoundedDime = null;
+var datasetWithRoundedDime = bb.reduce((a,c) => {
+  // console.log(c);
+  let round = Math.round(c.amount*10)/10;
+  let obj = {...c};
+  obj.roundedDime = round;
+  delete(obj.rounded);
+  a.push(obj);
+  return a;
+}, []);
 
 // set sumOfBankBalances to be the sum of all value held at `amount` for each bank object
-var sumOfBankBalances = null;
+var sumOfBankBalances = bb.reduce((a,c) => Math.round(a*100)/100 + Math.round(c.amount * 100)/100, 0);
 
 /*
   from each of the following states:
@@ -65,7 +80,15 @@ var sumOfBankBalances = null;
   take each `amount` and add 18.9% interest to it rounded to the nearest cent
   and then sum it all up into one value saved to `sumOfInterests`
  */
-var sumOfInterests = null;
+let states = ['WI', 'IL', 'WY', 'OH', 'GA', 'DE'];
+var sumOfInterests = bb.filter(e => states.includes(e.state)).reduce((a,c) => {
+  //creates a copy of the object
+  let obj = {...c};
+  //gets the 18.9% interest and rounds it to the hundreths place
+  let interest = Math.round(obj.amount * 18.9)/100;
+  //adds the interest to the accumulator
+  return Math.round((a + interest) * 100) /100;
+}, 0);
 
 /*
   aggregate the sum of bankBalance amounts
@@ -83,7 +106,16 @@ var sumOfInterests = null;
     round this number to the nearest 10th of a cent before moving on.
   )
  */
-var stateSums = null;
+var stateSums = bb.reduce((a,c) => {
+  let amount = Math.round(c.amount * 100) / 100;
+  if (a[c.state]) {
+    a[c.state] += amount;
+    a[c.state] = Math.round(a[c.state] * 100) / 100;
+  } else {
+    a[c.state] = amount;
+  }
+  return a;
+}, {});
 
 /*
   for all states *NOT* in the following states:
@@ -102,20 +134,29 @@ var stateSums = null;
     round this number to the nearest 10th of a cent before moving on.
   )
  */
-var sumOfHighInterests = null;
+var sumOfHighInterests = Object.keys(stateSums).filter(e => !states.includes(e)).reduce((a,c) => {
+  let interest = Math.round(stateSums[c] * 18.9) / 100;
+  if (interest > 50000) {
+    a += interest;
+  }
+  return Math.round(a * 100) / 100;
+}, 0);
 
 /*
   set `lowerSumStates` to be an array of two letter state
   abbreviations of each state where the sum of amounts
   in the state is less than 1,000,000
  */
-var lowerSumStates = null;
+var lowerSumStates = Object.keys(stateSums).filter(e => stateSums[e] < 1000000).reduce((a,c) => {
+  a.push(c);
+  return a;
+  }, []);
 
 /*
   aggregate the sum of each state into one hash table
   `higherStateSums` should be the sum of all states with totals greater than 1,000,000
  */
-var higherStateSums = null;
+var higherStateSums = Object.keys(stateSums).filter(e => stateSums[e] > 1000000).reduce((a,c) => a + stateSums[c], 0);
 
 /*
   from each of the following states:
@@ -132,8 +173,8 @@ var higherStateSums = null;
   if true set `areStatesInHigherStateSum` to `true`
   otherwise set it to `false`
  */
-var areStatesInHigherStateSum = null;
-
+let higherStates = ['WI', 'IL', 'WY', 'OH', 'GA', 'DE'];
+var areStatesInHigherStateSum = Object.keys(stateSums).filter(e => higherStates.includes(e)).every(e => stateSums[e] > 2550000);
 /*
   Stretch Goal && Final Boss
 
@@ -148,7 +189,7 @@ var areStatesInHigherStateSum = null;
   have a sum of account values greater than 2,550,000
   otherwise set it to be `false`
  */
-var anyStatesInHigherStateSum = null;
+var anyStatesInHigherStateSum = Object.keys(stateSums).filter(e => higherStates.includes(e)).some(e => stateSums[e] > 2550000);
 
 
 module.exports = {
