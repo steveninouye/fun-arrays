@@ -31,7 +31,7 @@ var datasetWithRoundedDollar = bb.reduce((a,c) => {
   obj.rounded = round;
   a.push(obj);
   return a;
-},[])
+}, [])
 
 /*
   DO NOT MUTATE DATA.
@@ -57,6 +57,7 @@ var datasetWithRoundedDollar = bb.reduce((a,c) => {
   assign the resulting new array to `roundedDime`
 */
 var datasetWithRoundedDime = bb.reduce((a,c) => {
+  // console.log(c);
   let round = Math.round(c.amount*10)/10;
   let obj = {...c};
   obj.roundedDime = round;
@@ -105,7 +106,16 @@ var sumOfInterests = bb.filter(e => states.includes(e.state)).reduce((a,c) => {
     round this number to the nearest 10th of a cent before moving on.
   )
  */
-var stateSums = null;
+var stateSums = bb.reduce((a,c) => {
+  let amount = Math.round(c.amount * 100) / 100;
+  if (a[c.state]) {
+    a[c.state] += amount;
+    a[c.state] = Math.round(a[c.state] * 100) / 100;
+  } else {
+    a[c.state] = amount;
+  }
+  return a;
+}, {});
 
 /*
   for all states *NOT* in the following states:
@@ -124,20 +134,29 @@ var stateSums = null;
     round this number to the nearest 10th of a cent before moving on.
   )
  */
-var sumOfHighInterests = null;
+var sumOfHighInterests = Object.keys(stateSums).filter(e => !states.includes(e)).reduce((a,c) => {
+  let interest = Math.round(stateSums[c] * 18.9) / 100;
+  if (interest > 50000) {
+    a += interest;
+  }
+  return Math.round(a * 100) / 100;
+}, 0);
 
 /*
   set `lowerSumStates` to be an array of two letter state
   abbreviations of each state where the sum of amounts
   in the state is less than 1,000,000
  */
-var lowerSumStates = null;
+var lowerSumStates = Object.keys(stateSums).filter(e => stateSums[e] < 1000000).reduce((a,c) => {
+  a.push(c);
+  return a;
+  }, []);
 
 /*
   aggregate the sum of each state into one hash table
   `higherStateSums` should be the sum of all states with totals greater than 1,000,000
  */
-var higherStateSums = null;
+var higherStateSums = Object.keys(stateSums).filter(e => stateSums[e] > 1000000).reduce((a,c) => a + stateSums[c], 0);
 
 /*
   from each of the following states:
@@ -154,8 +173,8 @@ var higherStateSums = null;
   if true set `areStatesInHigherStateSum` to `true`
   otherwise set it to `false`
  */
-var areStatesInHigherStateSum = null;
-
+let higherStates = ['WI', 'IL', 'WY', 'OH', 'GA', 'DE'];
+var areStatesInHigherStateSum = Object.keys(stateSums).filter(e => higherStates.includes(e)).every(e => stateSums[e] > 2550000);
 /*
   Stretch Goal && Final Boss
 
@@ -170,7 +189,7 @@ var areStatesInHigherStateSum = null;
   have a sum of account values greater than 2,550,000
   otherwise set it to be `false`
  */
-var anyStatesInHigherStateSum = null;
+var anyStatesInHigherStateSum = Object.keys(stateSums).filter(e => higherStates.includes(e)).some(e => stateSums[e] > 2550000);
 
 
 module.exports = {
